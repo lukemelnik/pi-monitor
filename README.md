@@ -10,6 +10,7 @@ pi install npm:@lukemelnik/pi-monitor
 
 - **Live agent registry** — each running Pi instance writes a heartbeat with status, cwd, model, session, and active tool info.
 - **Interactive monitor** — `pi-monitor --watch` shows live agents and updates once per second.
+- **Native Pi view** — `/pi-monitor` opens the same live monitor inside Pi.
 - **Tmux pane jump** — press `Enter` on an agent launched inside tmux to switch to that pane.
 - **Context usage** — shows current context consumption as a compact bar when Pi exposes usage data.
 - **Optional recap integration** — shows session recap markers when [`pi-session-recap`](https://github.com/lukemelnik/pi-session-recap) is installed.
@@ -33,6 +34,12 @@ The package includes both the Pi extension and the `pi-monitor` CLI. A global Pi
 
 ## Usage
 
+Open the monitor inside Pi:
+
+```text
+/pi-monitor
+```
+
 Print a one-shot table:
 
 ```bash
@@ -45,14 +52,14 @@ Open the interactive watcher:
 pi-monitor --watch
 ```
 
-Keys in watch mode:
+Keys in watch mode and the native Pi view:
 
 | Key | Action |
 |-----|--------|
 | `j` / `↓` | Move down |
 | `k` / `↑` | Move up |
 | `Enter` | Jump to the selected tmux pane, if available |
-| `q` / `Ctrl-C` | Exit |
+| `q` / `Esc` / `Ctrl-C` | Exit |
 
 Other options:
 
@@ -87,7 +94,7 @@ Right after startup, reload, or compaction, Pi may not know token usage yet. In 
 
 ## Optional recap integration
 
-If [`@lukemelnik/pi-session-recap`](https://github.com/lukemelnik/pi-session-recap) is installed, pi-monitor reads its saved session recap entries and shows an `R` marker plus the recap in the inspector.
+If [`@lukemelnik/pi-session-recap`](https://github.com/lukemelnik/pi-session-recap) is installed, pi-monitor reads its saved session recap entries and shows a `•` marker plus the recap in the inspector.
 
 ```bash
 pi install npm:@lukemelnik/pi-session-recap

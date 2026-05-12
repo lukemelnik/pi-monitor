@@ -360,7 +360,7 @@ function renderTable(states, opts, selectedIndex = -1) {
     const tmux = colorize(pad(truncate(tmuxDisplayFor(state, tmuxInfo), layout.tmuxWidth), layout.tmuxWidth), ANSI.magenta, opts);
     const project = pad(truncate(projectFor(state), layout.projectWidth), layout.projectWidth);
     const detail = colorize(truncate(detailFor(state), layout.detailWidth), state.status === "error" ? ANSI.red : ANSI.gray, opts);
-    const recapMark = summaryFor(state) ? colorize("R", ANSI.cyan, opts) : " ";
+    const recapMark = summaryFor(state) ? colorize("•", ANSI.cyan, opts) : " ";
     const rowParts = [`${cursor}${recapMark}`, status, age, pid, tmux, project];
 
     if (layout.contextWidth > 0) {
