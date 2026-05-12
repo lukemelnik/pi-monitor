@@ -1,0 +1,56 @@
+{
+  "name": "@lukemelnik/pi-monitor",
+  "version": "0.1.0",
+  "description": "A Pi extension and CLI for monitoring live Pi agents and jumping to their tmux panes.",
+  "type": "module",
+  "author": "Luke Melnik",
+  "license": "MIT",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "pi",
+    "monitor",
+    "tmux"
+  ],
+  "files": [
+    "src",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "homepage": "https://github.com/lukemelnik/pi-monitor#readme",
+  "bugs": {
+    "url": "https://github.com/lukemelnik/pi-monitor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lukemelnik/pi-monitor.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "pi-monitor": "./bin/pi-monitor.cjs"
+  },
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "scripts": {
+    "check": "tsc --noEmit -p tsconfig.json && node --check bin/pi-monitor.cjs",
+    "prepublishOnly": "npm run check",
+    "release:patch": "npm run check && npm version patch -m \"chore(release): %s\"",
+    "release:minor": "npm run check && npm version minor -m \"chore(release): %s\"",
+    "release:major": "npm run check && npm version major -m \"chore(release): %s\"",
+    "publish:release": "npm publish"
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@mariozechner/pi-coding-agent": "0.73.0",
+    "@types/node": "^25.6.0",
+    "typescript": "^6.0.3"
+  }
+}
