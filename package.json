@@ -1,6 +1,6 @@
 {
   "name": "@lukemelnik/pi-monitor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A Pi extension and CLI for monitoring live Pi agents and jumping to their tmux panes.",
   "type": "module",
   "author": "Luke Melnik",
