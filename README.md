@@ -12,6 +12,7 @@ pi install npm:@lukemelnik/pi-monitor
 - **Interactive monitor** — `pi-monitor --watch` shows live agents and updates once per second.
 - **Tmux pane jump** — press `Enter` on an agent launched inside tmux to switch to that pane.
 - **Context usage** — shows current context consumption as a compact bar when Pi exposes usage data.
+- **Optional recap integration** — shows session recap markers when [`pi-session-recap`](https://github.com/lukemelnik/pi-session-recap) is installed.
 - **Stale cleanup** — dead processes and old heartbeat files are pruned automatically.
 
 ## Install
@@ -83,6 +84,16 @@ CTX  ████░░░░░ 44%
 ```
 
 Right after startup, reload, or compaction, Pi may not know token usage yet. In that case the monitor shows `—` until usage data is available again.
+
+## Optional recap integration
+
+If [`@lukemelnik/pi-session-recap`](https://github.com/lukemelnik/pi-session-recap) is installed, pi-monitor reads its saved session recap entries and shows an `R` marker plus the recap in the inspector.
+
+```bash
+pi install npm:@lukemelnik/pi-session-recap
+```
+
+This is optional. Pi-monitor still works without the recap package.
 
 ## Development
 
