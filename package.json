@@ -38,7 +38,8 @@
     ]
   },
   "scripts": {
-    "check": "tsc --noEmit -p tsconfig.json && node --check bin/pi-monitor.cjs",
+    "check": "tsc --noEmit -p tsconfig.json && node --check bin/pi-monitor.cjs && npm test",
+    "test": "tsc -p tsconfig.test.json && node --test test/*.test.js",
     "prepublishOnly": "npm run check",
     "release:patch": "npm run check && npm version patch -m \"chore(release): %s\"",
     "release:minor": "npm run check && npm version minor -m \"chore(release): %s\"",

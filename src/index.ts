@@ -1,7 +1,7 @@
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { mkdir, rename, rm, unlink, writeFile } from "node:fs/promises";
+import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import { existsSync, readFileSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, join } from "node:path";
@@ -152,6 +152,8 @@ async function pruneStaleFiles(dir: string, currentFile: string) {
         } catch {
           // ignore cleanup races
         }
+
+        return undefined;
       }),
   );
 }
@@ -443,38 +445,40 @@ export default function (pi: ExtensionAPI) {
   let state: MonitorState | undefined;
   let heartbeat: NodeJS.Timeout | undefined;
   let disposed = false;
-  let writeInFlight = false;
+  let writeInFlight: Promise<void> | undefined;
   let writeAgain = false;
   let lastStreamWriteAt = 0;
   let pruneCounter = 0;
   const activeTools = new Map<string, ActiveTool>();
 
-  const flush = async () => {
-    if (!state || disposed) return;
+  const flush = (): Promise<void> => {
+    if (!state || disposed) return Promise.resolve();
 
     if (writeInFlight) {
       writeAgain = true;
-      return;
+      return writeInFlight;
     }
 
-    writeInFlight = true;
-    try {
-      state.lastHeartbeatAt = Date.now();
-      await mkdir(dirname(filePath), { recursive: true });
-      await writeFile(tempPath, `${JSON.stringify(state)}\n`, "utf8");
-      await rename(tempPath, filePath);
+    writeInFlight = (async () => {
+      try {
+        state.lastHeartbeatAt = Date.now();
+        await mkdir(dirname(filePath), { recursive: true });
+        await writeFile(tempPath, `${JSON.stringify(state)}\n`, "utf8");
+        await rename(tempPath, filePath);
 
-      pruneCounter += 1;
-      if (pruneCounter % 20 === 0) await pruneStaleFiles(liveDir(), filePath);
-    } catch {
-      // Monitoring must never affect the agent.
-    } finally {
-      writeInFlight = false;
-      if (writeAgain && !disposed) {
+        pruneCounter += 1;
+        if (pruneCounter % 20 === 0) await pruneStaleFiles(liveDir(), filePath);
+      } catch {
+        // Monitoring must never affect the agent.
+      } finally {
+        writeInFlight = undefined;
+        const shouldWriteAgain = writeAgain && !disposed;
         writeAgain = false;
-        void flush();
+        if (shouldWriteAgain) void flush();
       }
-    }
+    })();
+
+    return writeInFlight;
   };
 
   const update = (patch: Partial<MonitorState>, write: "now" | "later" | "stream" = "now") => {
@@ -513,6 +517,11 @@ export default function (pi: ExtensionAPI) {
     state.contextTokens = contextUsage?.tokens ?? null;
     state.contextWindow = contextUsage?.contextWindow;
     state.contextPercent = contextUsage?.percent ?? null;
+  };
+
+  const updateSessionMetadata = (ctx: ExtensionContext) => {
+    refreshSessionFields(ctx);
+    if (state) update({ detail: state.detail }, "now");
   };
 
   const dispose = () => {
@@ -713,12 +722,22 @@ export default function (pi: ExtensionAPI) {
 
     heartbeat = setInterval(() => {
       if (!state || disposed) return;
-      refreshSessionFields(ctx);
       update({ detail: state.detail }, "now");
     }, HEARTBEAT_MS);
 
     void flush();
   });
+
+  // These events postdate the package's Pi 0.73 development types.
+  const onModernMetadataEvent = pi.on as unknown as (
+    event: "agent_settled" | "session_info_changed",
+    handler: (_event: unknown, ctx: ExtensionContext) => void,
+  ) => void;
+  onModernMetadataEvent("agent_settled", (_event, ctx) => updateSessionMetadata(ctx));
+  onModernMetadataEvent("session_info_changed", (_event, ctx) => updateSessionMetadata(ctx));
+  pi.on("session_tree", (_event, ctx) => updateSessionMetadata(ctx));
+  pi.on("model_select", (_event, ctx) => updateSessionMetadata(ctx));
+  pi.on("thinking_level_select", (_event, ctx) => updateSessionMetadata(ctx));
 
   pi.on("agent_start", async (_event, ctx) => {
     refreshSessionFields(ctx);
@@ -851,11 +870,9 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_shutdown", async () => {
     process.removeListener("exit", processExitCleanup);
-    try {
-      await unlink(filePath);
-    } catch {
-      // ignore
-    }
     dispose();
+    await writeInFlight;
+    safeUnlink(filePath);
+    safeUnlink(tempPath);
   });
 }
